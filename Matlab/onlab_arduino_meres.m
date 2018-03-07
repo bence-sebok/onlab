@@ -3,10 +3,13 @@
 
 clear;
 clc;
+fprintf("Önálló laboratórium - mérés\n");
 
 % Mérési adatok fájlja
-fajlnev = 'onlab_arduino_meres.csv';
+fajlnev = 'onlab_arduino_meres_20180307.csv';
 meres = csvread(fajlnev, 1, 0);
+meres_db = length(meres);
+fprintf("Mérések száma: %d\n", meres_db)
 
 % Mérési adatok csoportosítása
 t = meres(:,1); % mérés sorszáma (percenként egy mérés)
