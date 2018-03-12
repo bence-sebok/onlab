@@ -1,3 +1,4 @@
+/* ******** Includes ******** */
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BMP085_U.h>
@@ -7,6 +8,9 @@
 #include <avr/interrupt.h>
 #include <SoftwareSerial.h>
 
+/* ******** Constants ******** */
+// #define DEBUG
+#define AT_MODE
 #define DHTPIN 2
 #define DHTTYPE DHT11
 #define LED_PIN 7
@@ -14,25 +18,29 @@
 #define OFF 0
 #define TX 9
 #define RX 8
+#define KEY 10
 
+/* ******** Global variables ******** */
 int flag_meres = 0;
 uint32_t counter = 0;
 uint32_t meres_sorszam = 1;
 int seconds = 0;
 int receivedByte;
-   
+
+/* ******** Global class objects ******** */
 Adafruit_BMP085_Unified bmp = Adafruit_BMP085_Unified(10085);
 BH1750 lightMeter;
 DHT dht(DHTPIN, DHTTYPE);
 SoftwareSerial bluetooth(RX, TX);
 
-// #define DEBUG
-
+/* ******** TIMER1 interrupt handler function ******** */
+// Interrupts every second
 ISR(TIMER1_COMPA_vect)
 {
   seconds++;
 }
 
+/* ******** TIMER1 init function ******** */
 void setTimer1(void)
 {
   // initialize Timer1
@@ -57,6 +65,7 @@ void setTimer1(void)
   sei();
 }
 
+/* ******** setup function ******** */
 void setup(void) 
 {
   setTimer1();
@@ -66,7 +75,18 @@ void setup(void)
   digitalWrite(LED_PIN, LOW);
   pinMode(RX, INPUT);
   pinMode(TX, OUTPUT);
-  bluetooth.begin(38400); // 38400
+  pinMode(KEY, OUTPUT);
+  #ifdef AT_MODE
+    digitalWrite(KEY, HIGH);
+  #else
+    digitalWrite(KEY, LOW);
+  #endif
+
+  #ifdef DEBUG
+    bluetooth.begin(38400);
+  #else
+    bluetooth.begin(9600);
+  #endif
   
   Wire.begin();
   lightMeter.begin();
@@ -108,9 +128,9 @@ void loop(void)
 {
   if(bluetooth.available() > 0)
   {
-    // receivedByte = bluetooth.read();
-    Serial.write(bluetooth.read());
-    // Serial.println(receivedByte, DEC);
+    receivedByte = bluetooth.read();
+    Serial.write(receivedByte); Serial.print(" ");
+    Serial.println(receivedByte, DEC);
     // Serial.flush();
   }
   if(Serial.available() > 0)
@@ -120,20 +140,25 @@ void loop(void)
     delay(10);
     digitalWrite(LED_PIN, LOW);
   }
-  if(receivedByte == 120)
+  if(receivedByte == '1')
   {
     digitalWrite(LED_PIN, HIGH);
     Serial.flush();
   }
-  else if(receivedByte == 0)
+  else if(receivedByte == '0')
   {
     digitalWrite(LED_PIN, LOW);
     Serial.flush();
   }
-  else if(receivedByte == 248)
+  else if(receivedByte == 47)
+  {
+    flag_meres = 1;
+    receivedByte = 0;
+  }
+  if(flag_meres)
   {
     digitalWrite(LED_PIN, HIGH);
-    Serial.flush();
+    // Serial.flush();
     Serial.print(meres_sorszam);
     Serial.print(" ");
     sensors_event_t event;
@@ -156,6 +181,7 @@ void loop(void)
     meres_sorszam++;
     seconds = 0;
     digitalWrite(LED_PIN, LOW);
+    flag_meres = 0;
   }
   /*
   if(seconds >= 10)
