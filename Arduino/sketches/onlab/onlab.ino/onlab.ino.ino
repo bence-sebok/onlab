@@ -116,16 +116,34 @@ void dht11_read(void)
   // Compute heat index in Celsius (isFahreheit = false)
   float hic = dht.computeHeatIndex(t, h, false);
 
+  Serial.print(h);
+  Serial.print('#');
+  Serial.print(t);
+  Serial.print('#');
+  Serial.print(hic);
+  Serial.println('%');
+  
+  bluetooth.print(h);
+  bluetooth.print('#');
+  bluetooth.print(t);
+  bluetooth.print('#');
+  bluetooth.print(hic);
+  bluetooth.print('%');
+/*
   Serial.print(h); // százalékos érték!!!
   Serial.print(" ");
   Serial.print(t);
   Serial.print(" ");
   Serial.print(hic);
   Serial.println(" ");
+  */
 }
 
 void loop(void) 
 {
+  flag_meres = 1;
+  delay(10*1000);
+  /*
   if(bluetooth.available() > 0)
   {
     receivedByte = bluetooth.read();
@@ -155,28 +173,44 @@ void loop(void)
     flag_meres = 1;
     receivedByte = 0;
   }
+  */
   if(flag_meres)
   {
+    float temp;
     digitalWrite(LED_PIN, HIGH);
-    // Serial.flush();
-    Serial.print(meres_sorszam);
-    Serial.print(" ");
+    //Serial.print(meres_sorszam);
+    //Serial.print(" ");
     sensors_event_t event;
     bmp.getEvent(&event);
     uint16_t lux = lightMeter.readLightLevel();
-    Serial.print(lux);
-    Serial.print(" ");
+    //Serial.print(lux);
+    //Serial.print(" ");
     if (event.pressure)
     {
-      Serial.print(event.pressure); Serial.print(" ");
-      float temp;
+      //Serial.print(event.pressure); Serial.print(" ");
       bmp.getTemperature(&temp);
-      Serial.print(temp); Serial.print(" ");
+      //Serial.print(temp); Serial.print(" ");
+      //bluetooth.print(temp);
     }
     else
     {
-      Serial.println("BMP180 sikertelen meres");
+      //Serial.println("BMP180 sikertelen meres");
     }
+    //dht11_read();
+    Serial.print('#');
+    Serial.print(meres_sorszam);
+    Serial.print('#');
+    Serial.print(temp);
+    Serial.print('#');
+    Serial.print(lux);
+    Serial.print('#');
+    bluetooth.print('#');
+    bluetooth.print(meres_sorszam);
+    bluetooth.print('#');
+    bluetooth.print(temp);
+    bluetooth.print('#');
+    bluetooth.print(lux);
+    bluetooth.print('#');
     dht11_read();
     meres_sorszam++;
     seconds = 0;
